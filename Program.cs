@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
 using KitchenApi.Helpers.Extensions;
+using KitchenApi.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +10,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureVersioning();
 builder.Services.ConfigureDatabaseSettings(builder.Configuration);
+builder.Services.AddScoped<IKitchenContext, KitchenContext>();
+builder.Services.ConfigureRepositories();
 
 var app = builder.Build();
 

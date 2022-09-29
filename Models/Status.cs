@@ -1,11 +1,7 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson;
-
-namespace KitchenApi.Models
+﻿namespace KitchenApi.Models
 {
-    public class Status
+    public class Status : BaseModel
     {
-        public int Id { get; set; } 
         public string Title { get; set; }
     }
 }

@@ -4,11 +4,8 @@ using KitchenApi.Requests;
 
 namespace KitchenApi.Models
 {
-    public class Order
+    public class Order : BaseModel
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
         public int OrderNumber { get; set; }
         public DateTime FinishDateTime { get; set; }
         public string Status { get; set; } = string.Empty;

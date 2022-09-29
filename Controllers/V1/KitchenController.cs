@@ -1,4 +1,4 @@
-﻿using KitchenApi.Interfaces;
+﻿using KitchenApi.Context;
 using KitchenApi.Models;
 using KitchenApi.Requests;
 using Microsoft.AspNetCore.Mvc;
@@ -11,65 +11,56 @@ namespace KitchenApi.Controllers.V1
     [ApiController]
     public class KitchenController : ControllerBase 
     {
-        private readonly IMongoCollection<Order> _orders;
-        private readonly IMongoCollection<Status> _statuses;
+        private readonly IKitchenContext _context;
 
-        public KitchenController(IKitchenDatabaseSettings settings)
+        public KitchenController(IKitchenContext context)
         {
-            var client = new MongoClient(settings.ConnectionString);
-            var database = client.GetDatabase(settings.DatabaseName);
-            _orders = database.GetCollection<Order>(settings.OrdersCollectionName);
-            _statuses = database.GetCollection<Status>(settings.StatusesCollectionName);
+           _context = context;
         }
         [HttpGet]
         public async Task<IActionResult> Order()
         {
-            var orders = await _orders.FindAsync(o => true);
-
+            var orders = await _context.Orders.FindAsync(o => true);
             return Ok(await orders.ToListAsync());
         }
         [HttpPost]
         public async Task<IActionResult> Order(OrderCreateRequest orderForCreate)
         {
-            var status = await _statuses.FindAsync(s => s.Id == 1).Result.FirstOrDefaultAsync();
-
             var order = new Order
             {
                 OrderNumber = orderForCreate.OrderNumber,
                 FinishDateTime = orderForCreate.FinishDateTime,
-                Status = status.Title,
+                Status = "pending",
                 Products = orderForCreate.Products
             };
-            await _orders.InsertOneAsync(order);
+            await _context.Orders.InsertOneAsync(order);
             return Ok();
         }
         [HttpPut]
         public async Task<IActionResult> AcceptOrder(bool accept, string id)
         {
-            var order = await _orders.FindAsync(o => o.Id == id).Result.FirstOrDefaultAsync();
+            var order = await _context.Orders.FindAsync(o => o.Id == id).Result.FirstOrDefaultAsync();
             if (accept)
             {
-                var acceptStatus = await _statuses.FindAsync(s => s.Id == 2).Result.FirstOrDefaultAsync();
                 var acceptedOrder = new Order
                 {
                     OrderNumber = order.OrderNumber,
                     FinishDateTime = order.FinishDateTime,
-                    Status = acceptStatus.Title,
+                    Status = "accepted",
                     Products = order.Products
                 };
-                await _orders.InsertOneAsync(acceptedOrder);
+                await _context.Orders.InsertOneAsync(acceptedOrder);
             }
             else
             {
-                var rejectStatus = await _statuses.FindAsync(s => s.Id == 4).Result.FirstOrDefaultAsync();
                 var rejectedOrder = new Order
                 {
                     OrderNumber = order.OrderNumber,
                     FinishDateTime = order.FinishDateTime,
-                    Status = rejectStatus.Title,
+                    Status = "rejected",
                     Products = order.Products
                 };
-                await _orders.InsertOneAsync(rejectedOrder);
+                await _context.Orders.InsertOneAsync(rejectedOrder);
             }
             return Ok();
         }

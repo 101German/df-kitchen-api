@@ -1,5 +1,6 @@
 ﻿using KitchenApi.Interfaces;
 using KitchenApi.Models;
+using KitchenApi.Repositories;
 using Microsoft.Extensions.Options;
 
 namespace KitchenApi.Helpers.Extensions
@@ -15,8 +16,13 @@ namespace KitchenApi.Helpers.Extensions
             services.Configure<KitchenDatabaseSettings>(
         Configuration.GetSection(nameof(KitchenDatabaseSettings)));
 
-            services.AddSingleton<IKitchenDatabaseSettings>(sp =>
+            services.AddSingleton(sp =>
                 sp.GetRequiredService<IOptions<KitchenDatabaseSettings>>().Value);
+        }
+
+        public static void ConfigureRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IStatusRepository,StatusRepository>();
         }
     }
 }

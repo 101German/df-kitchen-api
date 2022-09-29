@@ -1,8 +1,5 @@
 ﻿using KitchenApi.Interfaces;
-using KitchenApi.Models;
-using KitchenApi.Requests;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace KitchenApi.Controllers.V1
 {
@@ -11,41 +8,25 @@ namespace KitchenApi.Controllers.V1
     [ApiController]
     public class StatusController : ControllerBase
     {
-        private readonly IMongoCollection<Status> _statuses;
-        public StatusController(IKitchenDatabaseSettings settings)
+        private readonly IStatusService _statusService;
+        public StatusController(IStatusService statusService)
         {
-            var client = new MongoClient(settings.ConnectionString);
-            var database = client.GetDatabase(settings.DatabaseName);
-            _statuses = database.GetCollection<Status>(settings.StatusesCollectionName);
+            _statusService = statusService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Statuses()
+        public async Task<IActionResult> Statuses(CancellationToken cancellationToken = default)
         {
-            var statuses = await _statuses.FindAsync(s => true);
-            return Ok(await statuses.ToListAsync());
+            var statuses = await _statusService.GetAllStatusesAsync(cancellationToken);
+            return statuses is not null ? Ok(statuses) : NotFound();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Status(StatusCreateRequest status)
+        public async Task<IActionResult> Status(string title, CancellationToken cancellationToken = default)
         {
-            var IsStatusExist = await IsStatusExistWithSameName(status.Title);
-            if (!IsStatusExist)
-            {
-                var statusForCreate = new Status
-                {
-                    Title = status.Title
-                };
-                await _statuses.InsertOneAsync(statusForCreate);
-                return Ok();
-            }
-            return BadRequest("Status is already exist with this name.");
-        }
+            var result = await _statusService.AddStatusAsync(title, cancellationToken);
 
-        private async Task<bool> IsStatusExistWithSameName(string title)
-        {
-            var status = await _statuses.FindAsync(s => s.Title.ToLower() == title.ToLower()).Result.FirstOrDefaultAsync();
-            return status != null;
+            return result ? Ok() : BadRequest();
         }
     }
 }
