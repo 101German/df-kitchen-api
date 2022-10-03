@@ -1,17 +1,17 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
+using KitchenApi.Helpers.Extensions;
+using KitchenApi.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.ConfigureVersioning();
+builder.Services.ConfigureDatabaseSettings(builder.Configuration);
+builder.Services.AddScoped<IKitchenContext, KitchenContext>();
+builder.Services.ConfigureRepositories();
 
 var app = builder.Build();
 
