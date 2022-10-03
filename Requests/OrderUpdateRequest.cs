@@ -3,14 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace KitchenApi.Requests
 {
-    public class OrderCreateRequest
+    public class OrderUpdateRequest
     {
-        [Required]
         [Min(1)]
         public int OrderNumber { get; set; }
-        [Required]
+        [MaxLength(15)]
+        public string Status { get; set; }
         public List<Product> Products { get; set; } = new List<Product>();
-        [Required]
         public DateTime FinishDateTime { get; set; }
     }
 }
