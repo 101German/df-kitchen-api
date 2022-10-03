@@ -1,8 +1,9 @@
 ﻿using KitchenApi.Context;
-using KitchenApi.Models;
+using KitchenApi.Interfaces;
 using KitchenApi.Requests;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Net;
 
 namespace KitchenApi.Controllers.V1
 {
@@ -11,58 +12,59 @@ namespace KitchenApi.Controllers.V1
     [ApiController]
     public class KitchenController : ControllerBase 
     {
-        private readonly IKitchenContext _context;
+        private readonly IOrderService _orderService;
 
-        public KitchenController(IKitchenContext context)
+        public KitchenController(IKitchenContext context, IOrderService orderService)
         {
-           _context = context;
+            _orderService = orderService;
         }
         [HttpGet]
-        public async Task<IActionResult> Order()
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetOrders(CancellationToken cancellationToken)
         {
-            var orders = await _context.Orders.FindAsync(o => true);
-            return Ok(await orders.ToListAsync());
+            var orders = await _orderService.GerOrdersAsync(cancellationToken);
+            return orders.Any() ? Ok() : BadRequest();
+        }
+        [HttpGet("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetOrder(string id, CancellationToken cancellationToken)
+        {
+            var order = await _orderService.GetOrderAsync(id, cancellationToken);
+            return order is not null ? Ok() : BadRequest();
         }
         [HttpPost]
-        public async Task<IActionResult> Order(OrderCreateRequest orderForCreate)
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> AddOrder(OrderCreateRequest orderForCreate, CancellationToken cancellationToken)
         {
-            var order = new Order
-            {
-                OrderNumber = orderForCreate.OrderNumber,
-                FinishDateTime = orderForCreate.FinishDateTime,
-                Status = "pending",
-                Products = orderForCreate.Products
-            };
-            await _context.Orders.InsertOneAsync(order);
-            return Ok();
+            var orderId = await _orderService.AddOrderAsync(orderForCreate, cancellationToken);
+            return orderId is not null ? Ok(orderId) : BadRequest();
         }
-        [HttpPut]
-        public async Task<IActionResult> AcceptOrder(bool accept, string id)
+        [HttpPut("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> AcceptOrder(string id,bool accept, CancellationToken cancellationToken)
         {
-            var order = await _context.Orders.FindAsync(o => o.Id == id).Result.FirstOrDefaultAsync();
-            if (accept)
-            {
-                var acceptedOrder = new Order
-                {
-                    OrderNumber = order.OrderNumber,
-                    FinishDateTime = order.FinishDateTime,
-                    Status = "accepted",
-                    Products = order.Products
-                };
-                await _context.Orders.InsertOneAsync(acceptedOrder);
-            }
-            else
-            {
-                var rejectedOrder = new Order
-                {
-                    OrderNumber = order.OrderNumber,
-                    FinishDateTime = order.FinishDateTime,
-                    Status = "rejected",
-                    Products = order.Products
-                };
-                await _context.Orders.InsertOneAsync(rejectedOrder);
-            }
-            return Ok();
+            var res = await _orderService.AcceptOrder(accept, id, cancellationToken);
+            return res ? Ok() : BadRequest();
+        }
+        [HttpPut("UpdateOrder/{id}")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> UpdateOrder(string id, OrderUpdateRequest order,CancellationToken cancellationToken)
+        {
+            var res = await _orderService.UpdateOrderAsync(id, order, cancellationToken);
+            return res ? Ok() : BadRequest();
+        }
+        [HttpDelete("{id}")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> DeleteOrder(string id, CancellationToken cancellationToken)
+        {
+            var res = await _orderService.DeleteOrderAsync(id, cancellationToken);
+            return res ? Ok() : BadRequest();
         }
      }
 }

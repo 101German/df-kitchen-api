@@ -1,5 +1,7 @@
 ﻿using KitchenApi.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace KitchenApi.Controllers.V1
 {
@@ -15,14 +17,18 @@ namespace KitchenApi.Controllers.V1
         }
 
         [HttpGet]
-        public async Task<IActionResult> Statuses(CancellationToken cancellationToken = default)
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> Status(CancellationToken cancellationToken = default)
         {
             var statuses = await _statusService.GetAllStatusesAsync(cancellationToken);
-            return statuses is not null ? Ok(statuses) : NotFound();
+            return statuses.Count > 0 ? Ok(statuses) : NotFound();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Status(string title, CancellationToken cancellationToken = default)
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> Status([MaxLength(25)]string title, CancellationToken cancellationToken = default)
         {
             var result = await _statusService.AddStatusAsync(title, cancellationToken);
 
