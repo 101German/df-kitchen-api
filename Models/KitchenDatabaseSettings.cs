@@ -2,7 +2,7 @@
 
 namespace KitchenApi.Models
 {
-    public class KitchenDatabaseSettings : IKitchenDatabaseSettings
+    public class KitchenDatabaseSettings
     {
         public string OrdersCollectionName { get; set; }
         public string StatusesCollectionName { get; set; }
