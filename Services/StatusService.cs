@@ -1,4 +1,5 @@
-﻿using KitchenApi.Interfaces;
+﻿using KitchenApi.DTO.Status;
+using KitchenApi.Interfaces;
 using KitchenApi.Models;
 
 namespace KitchenApi.Services
@@ -10,7 +11,6 @@ namespace KitchenApi.Services
         {
             _statusRepository = statusRepository;
         }
-
         public async Task<bool> AddStatusAsync(string statusTitle, CancellationToken cancellationToken)
         {
             if (!await IsStatusExistAsync(statusTitle,cancellationToken))
@@ -21,19 +21,32 @@ namespace KitchenApi.Services
                     CreateAt = DateTime.Now,
                     UpdateAt = DateTime.Now
                 };
+                await _statusRepository.AddStatusAsync(status, cancellationToken);
                 return true;
             }
             return false;
         }
 
-        public async Task<IReadOnlyCollection<Status>> GetAllStatusesAsync(CancellationToken cancellationToken)
+        public async Task<IReadOnlyCollection<StatusForReturn>> GetAllStatusesAsync(CancellationToken cancellationToken)
         {
-           return await _statusRepository.GetAllStatusesAsync(cancellationToken);
+            var statuses = await _statusRepository.GetAllStatusesAsync(cancellationToken);
+            var statusesForReturn = new List<StatusForReturn>();
+            foreach(var status in statuses)
+            {
+                statusesForReturn.Add(new StatusForReturn
+                {
+                    Title = status.Title
+                });
+            }
+           return statusesForReturn;
         }
 
-        public async Task<Status> GetStatusAsync(string id, CancellationToken cancellationToken)
+        public async Task<StatusForReturn?> GetStatusAsync(string id, CancellationToken cancellationToken)
         {
-            return await _statusRepository.GetStatusAsync(id, cancellationToken);
+            var status = await _statusRepository.GetStatusAsync(id, cancellationToken);
+            return status != null 
+                ? new StatusForReturn { Title = status.Title} 
+                : null;
         }
 
         public async Task<bool> IsStatusExistAsync(string title, CancellationToken cancellationToken)
